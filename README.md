@@ -1,2 +1,4 @@
-# 03_Deep-Learning
-Keras, Pytorch, Tensorflow 등의 라이브러리를 활용한 딥러닝 실습 및 연구개발
+## Deep Learning study
+using Tensorflow, Keras, Pytorch  
+  
+development environment : Python 3.6, Tensorflow 2.0, Keras 2.3, Pytorch x.x, Numpy 1.19
