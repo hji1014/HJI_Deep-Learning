@@ -10,7 +10,7 @@ b = tf.Variable(tf.random_uniform([1], -1.0, 1.0))
 
 X = tf.placeholder(tf.float32, name='X')                   # name : 추후 텐서보드 사용할 때 이름을 통해 쉽게 확인할 수 있음
 Y = tf.placeholder(tf.float32, name='Y')
-#X = tf.placeholder(tf.float32)                   # name : 추후 텐서보드 사용할 때 이름을 통해 쉽게 확인할 수 있음
+#X = tf.placeholder(tf.float32)
 #Y = tf.placeholder(tf.float32)
 
 hypothesis = W * X + b                                     # W, X가 행렬이 아니므로 행렬곱이 아닌 곱셈기호 사용
