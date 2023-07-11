@@ -21,14 +21,14 @@ b = tf.Variable(tf.random_normal([2, 1]))
 expr = tf.matmul(X, W) + b
 
 sess = tf.Session()
-sess.run(tf.global_variables_initializer())     # 변수 다시 한 번 초기화
+sess.run(tf.global_variables_initializer())     # 변수 다시 한 번 초기화 (안 하면 에러)
 
 print(x_data)
 print(sess.run(W))
 print(sess.run(b))
 print(sess.run(expr, feed_dict={X: x_data}))    # expr 수식에 x_data 입력하는 방법
 
-#a = sess.run(expr, feed_dict={X: x_data})       # 출력값은 numpy 배열로 나옴
-#print(type(a))
+a = sess.run(expr, feed_dict={X: x_data})       # 출력값은 numpy 배열로 나옴
+print(type(a))
 
 sess.close()
