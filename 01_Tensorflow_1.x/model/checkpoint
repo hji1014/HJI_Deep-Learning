@@ -1,0 +1,2 @@
+model_checkpoint_path: "C:/Users/User/PycharmProjects/py_365/01_Tensorflow_1/model/dnn.ckpt-2"
+all_model_checkpoint_paths: "C:/Users/User/PycharmProjects/py_365/01_Tensorflow_1/model/dnn.ckpt-2"
