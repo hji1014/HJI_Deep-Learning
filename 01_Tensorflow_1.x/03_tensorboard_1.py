@@ -1,11 +1,12 @@
 # 텐서보드를 이용하기 위해 각종 변수들을 설정하고 저장하는 방법을 익혀봅니다.
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy as np
 
 
-data = np.loadtxt('./data.csv', delimiter=',',
-                  unpack=True, dtype='float32')
+data = np.loadtxt('C:/Users/User/PycharmProjects/py_365/04_Data/data.csv', delimiter=',', unpack=True, dtype='float32')
+
 
 x_data = np.transpose(data[0:2])
 y_data = np.transpose(data[2:])
@@ -49,7 +50,7 @@ with tf.name_scope('optimizer'):
 sess = tf.Session()
 saver = tf.train.Saver(tf.global_variables())
 
-ckpt = tf.train.get_checkpoint_state('./model')
+ckpt = tf.train.get_checkpoint_state('C:/Users/User/PycharmProjects/py_365/01_Tensorflow_1/model')
 if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
     saver.restore(sess, ckpt.model_checkpoint_path)
 else:
@@ -58,7 +59,7 @@ else:
 # 텐서보드에서 표시해주기 위한 텐서들을 수집합니다.
 merged = tf.summary.merge_all()
 # 저장할 그래프와 텐서값들을 저장할 디렉토리를 설정합니다.
-writer = tf.summary.FileWriter('./logs', sess.graph)
+writer = tf.summary.FileWriter('./01_Tensorflow_1/logs', sess.graph)        # ./ : 현재 프로젝트
 # 이렇게 저장한 로그는, 학습 후 다음의 명령어를 이용해 웹서버를 실행시킨 뒤
 # tensorboard --logdir=./logs
 # 다음 주소와 웹브라우저를 이용해 텐서보드에서 확인할 수 있습니다.
@@ -75,7 +76,7 @@ for step in range(100):
     summary = sess.run(merged, feed_dict={X: x_data, Y: y_data})
     writer.add_summary(summary, global_step=sess.run(global_step))
 
-saver.save(sess, './model/dnn.ckpt', global_step=global_step)
+saver.save(sess, 'C:/Users/User/PycharmProjects/py_365/01_Tensorflow_1/model/dnn.ckpt', global_step=global_step)
 
 #########
 # 결과 확인
