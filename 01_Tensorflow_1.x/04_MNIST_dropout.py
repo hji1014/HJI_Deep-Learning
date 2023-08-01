@@ -73,7 +73,7 @@ accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 print('정확도:', sess.run(accuracy,
                         feed_dict={X: test_images,
                                    Y: test_labels,
-                                   keep_prob: 0.8}))
+                                   keep_prob: 1}))
 
 #########
 # 결과 확인 (matplot)
