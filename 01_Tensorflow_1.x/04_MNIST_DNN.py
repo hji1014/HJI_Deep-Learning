@@ -1,37 +1,36 @@
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+import numpy as np
+from keras.utils import np_utils
 
-from tensorflow.examples.tutorials.mnist import input_data
-# 텐서플로우에 기본 내장된 mnist 모듈을 이용하여 데이터를 로드합니다.
-# 지정한 폴더에 MNIST 데이터가 없는 경우 자동으로 데이터를 다운로드합니다.
-# one_hot 옵션은 레이블을 동물 분류 예제에서 보았던 one_hot 방식의 데이터로 만들어줍니다.
-mnist = input_data.read_data_sets("./mnist/data/", one_hot=True)
+# 데이터 로드
+from tensorflow.keras import datasets
+(train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
+train_images, test_images = (train_images / 255.0), (test_images / 255.0)       # normalization 0 to 1
+train_images = np.reshape(train_images, (np.shape(train_images)[0], np.shape(train_images)[1] * np.shape(train_images)[2]))
+test_images = np.reshape(test_images, (np.shape(test_images)[0], np.shape(test_images)[1] * np.shape(test_images)[2]))
+train_labels = np_utils.to_categorical(train_labels)
+test_labels = np_utils.to_categorical(test_labels)
 
 #########
 # 신경망 모델 구성
 ######
-# 입력 값의 차원은 [배치크기, 특성값] 으로 되어 있습니다.
-# 손글씨 이미지는 28x28 픽셀로 이루어져 있고, 이를 784개의 특성값으로 정합니다.
-X = tf.placeholder(tf.float32, [None, 784])
-# 결과는 0~9 의 10 가지 분류를 가집니다.
-Y = tf.placeholder(tf.float32, [None, 10])
+X = tf.placeholder(tf.float32, [None, 784])     # features : 28 * 28 = 784
+Y = tf.placeholder(tf.float32, [None, 10])      # label : 0 ~ 9
 
-# 신경망의 레이어는 다음처럼 구성합니다.
-# 784(입력 특성값)
-#   -> 256 (히든레이어 뉴런 갯수) -> 256 (히든레이어 뉴런 갯수)
-#   -> 10 (결과값 0~9 분류)
 W1 = tf.Variable(tf.random_normal([784, 256], stddev=0.01))
-# 입력값에 가중치를 곱하고 ReLU 함수를 이용하여 레이어를 만듭니다.
 L1 = tf.nn.relu(tf.matmul(X, W1))
 
 W2 = tf.Variable(tf.random_normal([256, 256], stddev=0.01))
-# L1 레이어의 출력값에 가중치를 곱하고 ReLU 함수를 이용하여 레이어를 만듭니다.
 L2 = tf.nn.relu(tf.matmul(L1, W2))
 
 W3 = tf.Variable(tf.random_normal([256, 10], stddev=0.01))
-# 최종 모델의 출력값은 W3 변수를 곱해 10개의 분류를 가지게 됩니다.
 model = tf.matmul(L2, W3)
 
+# 텐서플로우에서 기본적으로 제공되는 크로스 엔트로피 함수를 이용해
+# 복잡한 수식을 사용하지 않고도 최적화를 위한 비용 함수를 다음처럼 간단하게 적용할 수 있습니다.
+# tf.nn.softmax_cross_entropy_with_logits_v2 : softmax 함수와 크로스 엔트로피*Cross-Entropy 손실함수를 구현한 API.
+# softmax 계산까지 함께 해주기 때문에 소프트맥스 함수(tf.nn.softmax)를 씌운 normalize된 출력값이 아닌 소프트맥스 함수를 씌우기 전의 출력값인 logits를 인자로 넣어주어야 함.
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=Y))
 optimizer = tf.train.AdamOptimizer(0.001).minimize(cost)
 
@@ -43,7 +42,7 @@ sess = tf.Session()
 sess.run(init)
 
 batch_size = 100
-total_batch = int(mnist.train.num_examples / batch_size)
+total_batch = int(np.shape(train_images)[0] / batch_size)
 
 for epoch in range(15):
     total_cost = 0
@@ -51,7 +50,9 @@ for epoch in range(15):
     for i in range(total_batch):
         # 텐서플로우의 mnist 모델의 next_batch 함수를 이용해
         # 지정한 크기만큼 학습할 데이터를 가져옵니다.
-        batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+        # batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+        batch_xs = train_images[(0 + i * batch_size):(batch_size + i * batch_size), :]
+        batch_ys = train_labels[(0 + i * batch_size):(batch_size + i * batch_size), :]
 
         _, cost_val = sess.run([optimizer, cost], feed_dict={X: batch_xs, Y: batch_ys})
         total_cost += cost_val
@@ -70,5 +71,5 @@ print('최적화 완료!')
 is_correct = tf.equal(tf.argmax(model, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 print('정확도:', sess.run(accuracy,
-                        feed_dict={X: mnist.test.images,
-                                   Y: mnist.test.labels}))
+                        feed_dict={X: test_images,
+                                   Y: test_labels}))
