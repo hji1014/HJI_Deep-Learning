@@ -44,9 +44,9 @@ model = tf.matmul(L3, W4)
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=Y))
 optimizer = tf.train.AdamOptimizer(0.001).minimize(cost)
 
-#########
+##################
 # 신경망 모델 학습
-######
+##################
 init = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init)
