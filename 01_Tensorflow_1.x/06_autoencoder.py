@@ -1,10 +1,16 @@
 # 대표적인 비지도(Unsupervised) 학습 방법인 Autoencoder를 구현해봅니다.
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy as np
+from keras.utils import np_utils
 import matplotlib.pyplot as plt
 
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("./mnist/data/", one_hot=True)
+# 데이터 로드
+from tensorflow.keras import datasets
+(train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
+train_images, test_images = (train_images / 255.0), (test_images / 255.0)       # normalization 0 to 1
+train_labels = np_utils.to_categorical(train_labels)
+test_labels = np_utils.to_categorical(test_labels)
 
 #########
 # 옵션 설정
