@@ -17,8 +17,8 @@ print(df.info())
 print(df.head())
 '''
 dataset = df.values
-X = dataset[:,0:60]
-Y_obj = dataset[:,60]
+X = dataset[:, 0:60]
+Y_obj = dataset[:, 60]
 
 e = LabelEncoder()
 e.fit(Y_obj)
