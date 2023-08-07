@@ -1,4 +1,4 @@
-# 대표적인 비지도(Unsupervised) 학습 방법인 Autoencoder를 구현해봅니다.
+# 대표적인 비지도(Unsupervised) 학습 방법인 Autoencoder를 구현
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
@@ -9,22 +9,24 @@ import matplotlib.pyplot as plt
 from tensorflow.keras import datasets
 (train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
 train_images, test_images = (train_images / 255.0), (test_images / 255.0)       # normalization 0 to 1
+train_images = np.reshape(train_images, (np.shape(train_images)[0], np.shape(train_images)[1] * np.shape(train_images)[2]))
+test_images = np.reshape(test_images, (np.shape(test_images)[0], np.shape(test_images)[1] * np.shape(test_images)[2]))
 train_labels = np_utils.to_categorical(train_labels)
 test_labels = np_utils.to_categorical(test_labels)
 
-#########
+##################
 # 옵션 설정
-######
+##################
 learning_rate = 0.01
-training_epoch = 20
+training_epoch = 100
 batch_size = 100
 # 신경망 레이어 구성 옵션
 n_hidden = 256  # 히든 레이어의 뉴런 갯수
-n_input = 28*28   # 입력값 크기 - 이미지 픽셀수
+n_input = 28 * 28   # 입력값 크기 - 이미지 픽셀수
 
-#########
+##################
 # 신경망 모델 구성
-######
+##################
 # Y 가 없습니다. 입력값을 Y로 사용하기 때문입니다.
 X = tf.placeholder(tf.float32, [None, n_input])
 
@@ -54,20 +56,22 @@ decoder = tf.nn.sigmoid(
 cost = tf.reduce_mean(tf.pow(X - decoder, 2))
 optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 
-#########
+##################
 # 신경망 모델 학습
-######
+##################
 init = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init)
 
-total_batch = int(mnist.train.num_examples/batch_size)
+total_batch = int(np.shape(train_images)[0] / batch_size)
 
 for epoch in range(training_epoch):
     total_cost = 0
 
     for i in range(total_batch):
-        batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+        batch_xs = train_images[(0 + i * batch_size):(batch_size + i * batch_size), :]
+        batch_ys = train_labels[(0 + i * batch_size):(batch_size + i * batch_size), :]
+
         _, cost_val = sess.run([optimizer, cost],
                                feed_dict={X: batch_xs})
         total_cost += cost_val
@@ -76,3 +80,22 @@ for epoch in range(training_epoch):
           'Avg. cost =', '{:.4f}'.format(total_cost / total_batch))
 
 print('최적화 완료!')
+
+##################
+# 결과 확인
+# 입력값(위쪽)과 모델이 생성한 값(아래쪽)을 시각적으로 비교해봅니다.
+##################
+sample_size = 10
+
+samples = sess.run(decoder,
+                   feed_dict={X: test_images[:sample_size]})
+
+fig, ax = plt.subplots(2, sample_size, figsize=(sample_size, 2))
+
+for i in range(sample_size):
+    ax[0][i].set_axis_off()
+    ax[1][i].set_axis_off()
+    ax[0][i].imshow(np.reshape(test_images[i], (28, 28)))
+    ax[1][i].imshow(np.reshape(samples[i], (28, 28)))
+
+plt.show()
