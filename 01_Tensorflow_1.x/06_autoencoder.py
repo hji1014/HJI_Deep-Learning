@@ -1,4 +1,4 @@
-# 대표적인 비지도(Unsupervised) 학습 방법인 Autoencoder를 구현
+# 대표적인 비지도(Unsupervised) 학습 방법 Autoencoder 구현
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
