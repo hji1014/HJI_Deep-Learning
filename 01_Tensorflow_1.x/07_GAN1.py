@@ -1,16 +1,24 @@
-# 2016년에 가장 관심을 많이 받았던 비감독(Unsupervised) 학습 방법인
-# Generative Adversarial Network(GAN)을 구현해봅니다.
+# Generative Adversarial Network(GAN) 구현
+# 2016년에 가장 관심을 많이 받았던 비감독(Unsupervised) 학습 방법
 # https://arxiv.org/abs/1406.2661
-import tensorflow as tf
-import matplotlib.pyplot as plt
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy as np
+from keras.utils import np_utils
+import matplotlib.pyplot as plt
 
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("./mnist/data/", one_hot=True)
+# 데이터 로드
+from tensorflow.keras import datasets
+(train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
+train_images, test_images = (train_images / 255.0), (test_images / 255.0)       # normalization 0 to 1
+train_images = np.reshape(train_images, (np.shape(train_images)[0], np.shape(train_images)[1] * np.shape(train_images)[2]))
+test_images = np.reshape(test_images, (np.shape(test_images)[0], np.shape(test_images)[1] * np.shape(test_images)[2]))
+train_labels = np_utils.to_categorical(train_labels)
+test_labels = np_utils.to_categorical(test_labels)
 
-#########
+##################
 # 옵션 설정
-######
+##################
 total_epoch = 100
 batch_size = 100
 learning_rate = 0.0002
@@ -19,17 +27,18 @@ n_hidden = 256
 n_input = 28 * 28
 n_noise = 128  # 생성기의 입력값으로 사용할 노이즈의 크기
 
-#########
+##################
 # 신경망 모델 구성
-######
+##################
 # GAN 도 Unsupervised 학습이므로 Autoencoder 처럼 Y 를 사용하지 않습니다.
 X = tf.placeholder(tf.float32, [None, n_input])
 # 노이즈 Z를 입력값으로 사용합니다.
 Z = tf.placeholder(tf.float32, [None, n_noise])
 
 # 생성기 신경망에 사용하는 변수들입니다.
+# 128의 길이를 갖는 noise input으로 784의 길이를 갖는 fake data 생성
 G_W1 = tf.Variable(tf.random_normal([n_noise, n_hidden], stddev=0.01))
-G_b1 = tf.Variable(tf.zeros([n_hidden]))
+G_b1 = tf.Variable(tf.zeros([n_hidden]))    # bias 초기값이 왜 zero? 어차피 학습을 통해 업데이트 됨
 G_W2 = tf.Variable(tf.random_normal([n_hidden, n_input], stddev=0.01))
 G_b2 = tf.Variable(tf.zeros([n_input]))
 
@@ -40,7 +49,6 @@ D_b1 = tf.Variable(tf.zeros([n_hidden]))
 D_W2 = tf.Variable(tf.random_normal([n_hidden, 1], stddev=0.01))
 D_b2 = tf.Variable(tf.zeros([1]))
 
-
 # 생성기(G) 신경망을 구성합니다.
 def generator(noise_z):
     hidden = tf.nn.relu(
@@ -49,7 +57,6 @@ def generator(noise_z):
                     tf.matmul(hidden, G_W2) + G_b2)
 
     return output
-
 
 # 판별기(D) 신경망을 구성합니다.
 def discriminator(inputs):
@@ -60,11 +67,9 @@ def discriminator(inputs):
 
     return output
 
-
 # 랜덤한 노이즈(Z)를 만듭니다.
 def get_noise(batch_size, n_noise):
     return np.random.normal(size=(batch_size, n_noise))
-
 
 # 노이즈를 이용해 랜덤한 이미지를 생성합니다.
 G = generator(Z)
@@ -100,18 +105,20 @@ train_D = tf.train.AdamOptimizer(learning_rate).minimize(-loss_D,
 train_G = tf.train.AdamOptimizer(learning_rate).minimize(-loss_G,
                                                          var_list=G_var_list)
 
-#########
+##################
 # 신경망 모델 학습
-######
+##################
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
-total_batch = int(mnist.train.num_examples/batch_size)
+total_batch = int(np.shape(train_images)[0] / batch_size)
+
 loss_val_D, loss_val_G = 0, 0
 
 for epoch in range(total_epoch):
     for i in range(total_batch):
-        batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+        batch_xs = train_images[(0 + i * batch_size):(batch_size + i * batch_size), :]
+        batch_ys = train_labels[(0 + i * batch_size):(batch_size + i * batch_size), :]
         noise = get_noise(batch_size, n_noise)
 
         # 판별기와 생성기 신경망을 각각 학습시킵니다.
@@ -124,9 +131,9 @@ for epoch in range(total_epoch):
           'D loss: {:.4}'.format(loss_val_D),
           'G loss: {:.4}'.format(loss_val_G))
 
-    #########
+    ##################
     # 학습이 되어가는 모습을 보기 위해 주기적으로 이미지를 생성하여 저장
-    ######
+    ##################
     if epoch == 0 or (epoch + 1) % 10 == 0:
         sample_size = 10
         noise = get_noise(sample_size, n_noise)
@@ -138,7 +145,7 @@ for epoch in range(total_epoch):
             ax[i].set_axis_off()
             ax[i].imshow(np.reshape(samples[i], (28, 28)))
 
-        plt.savefig('samples/{}.png'.format(str(epoch).zfill(3)), bbox_inches='tight')
+        plt.savefig('C:/Users/User/PycharmProjects/py_365/01_Tensorflow_1/GAN_samples_1/{}.png'.format(str(epoch).zfill(3)), bbox_inches='tight')
         plt.close(fig)
 
 print('최적화 완료!')
