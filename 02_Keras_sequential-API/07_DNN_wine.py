@@ -1,11 +1,9 @@
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 import pandas as pd
 import numpy
 import tensorflow as tf
-import matplotlib.pyplot as plt
 
 # seed 값 설정
 seed = 0
