@@ -33,6 +33,7 @@ model.compile(loss='mean_squared_error',
 model.fit(X_train, Y_train, epochs=200, batch_size=10)
 
 # 예측 값과 실제 값의 비교 (정확도 -> evaluate, 예측값 출력 -> predict)
+# faltten() -> (num,1) shape를 (num, )로 변환 -> 즉 matlab의 squeeze와 같이 길이 1의 차원 제거
 Y_prediction = model.predict(X_test).flatten()
 for i in range(10):
     label = Y_test[i]
