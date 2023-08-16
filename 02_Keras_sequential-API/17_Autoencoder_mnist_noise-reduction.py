@@ -1,5 +1,6 @@
 """
 주의사항 : CPU로는 오래 걸리니, 구글 코랩으로 돌리면 좋음
+ref : https://sirzzang.github.io/ai/AI-AE-04/
 """
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.models import Sequential, Model
