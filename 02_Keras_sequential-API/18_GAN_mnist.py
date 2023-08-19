@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 
 #이미지가 저장될 폴더가 없다면 만듭니다.
 import os
-if not os.path.exists("./gan_images"):
-    os.makedirs("./gan_images")
+if not os.path.exists("C:/Users/User/PycharmProjects/py_365/02_Keras_sequential-API/GAN_samples"):
+    os.makedirs("C:/Users/User/PycharmProjects/py_365/02_Keras_sequential-API/GAN_samples")
 
 np.random.seed(3)
 tf.random.set_seed(3)
