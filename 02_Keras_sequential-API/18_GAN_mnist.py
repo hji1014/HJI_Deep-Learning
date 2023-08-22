@@ -95,6 +95,6 @@ def gan_train(epoch, batch_size, saving_interval):
                       axs[j, k].imshow(gen_imgs[count, :, :, 0], cmap='gray')
                       axs[j, k].axis('off')
                       count += 1
-              fig.savefig("gan_images/gan_mnist_%d.png" % i)
+              fig.savefig("C:/Users/User/PycharmProjects/py_365/02_Keras_sequential-API/GAN_samples/gan_mnist_%d.png" % i)
 
 gan_train(4001, 32, 200)  #4000번 반복되고(+1을 해 주는 것에 주의), 배치 사이즈는 32,  200번 마다 결과가 저장되게 하였습니다.
