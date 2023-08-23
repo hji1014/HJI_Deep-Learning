@@ -78,8 +78,7 @@ def gan_train(epoch, batch_size, saving_interval):
 
           print('epoch:%d' % i, ' d_loss:%.4f' % d_loss, ' g_loss:%.4f' % g_loss)
 
-        # 이부분은 중간 과정을 이미지로 저장해 주는 부분입니다. 본 장의 주요 내용과 관련이 없어
-        # 소스코드만 첨부합니다. 만들어진 이미지들은 gan_images 폴더에 저장됩니다.
+          # 생성 이미지 저장
           if i % saving_interval == 0:
               #r, c = 5, 5
               noise = np.random.normal(0, 1, (25, 100))
