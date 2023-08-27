@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from keras.preprocessing import sequence
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
@@ -29,11 +26,11 @@ x_test = sequence.pad_sequences(x_test, maxlen=100)
 model = Sequential()
 model.add(Embedding(5000, 100))
 model.add(Dropout(0.5))
-model.add(Conv1D(64, 5, padding='valid', activation='relu',strides=1))
+model.add(Conv1D(64, 5, padding='valid', activation='relu', strides=1))
 model.add(MaxPooling1D(pool_size=4))
 model.add(LSTM(55))
 model.add(Dense(1))
-model.add(Activation('sigmoid'))
+model.add(Activation('sigmoid'))        # 출력 0~1 사이 (label이 부정 or 긍정 밖에 없으니..)
 model.summary()
 
 # 모델의 컴파일
