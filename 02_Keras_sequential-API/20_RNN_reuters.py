@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import numpy
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -30,9 +27,9 @@ print(len(X_test), '테스트용 뉴스 기사')
 print(X_train[0])
 
 # 데이터 전처리
-x_train = sequence.pad_sequences(X_train, maxlen=100)
-x_test = sequence.pad_sequences(X_test, maxlen=100)
-y_train = np_utils.to_categorical(Y_train)
+x_train = sequence.pad_sequences(X_train, maxlen=100)       # 입력 데이터 크기를 100으로 맞춰 줌
+x_test = sequence.pad_sequences(X_test, maxlen=100)         # 모자라면 0으로 채우고, 100보다 크면 100개째 단어까지 선택
+y_train = np_utils.to_categorical(Y_train)                  # one-hot encoding
 y_test = np_utils.to_categorical(Y_test)
 
 # 모델의 설정
@@ -47,7 +44,7 @@ model.compile(loss='categorical_crossentropy',
             metrics=['accuracy'])
 
 # 모델의 실행
-history = model.fit(x_train, y_train, batch_size=100, epochs=20, validation_data=(x_test, y_test))
+history = model.fit(x_train, y_train, batch_size=100, epochs=20, validation_data=(x_test, y_test), verbose=1)
 
 # 테스트 정확도 출력
 print("\n Test Accuracy: %.4f" % (model.evaluate(x_test, y_test)[1]))
@@ -70,3 +67,14 @@ plt.grid()
 plt.xlabel('epoch')
 plt.ylabel('loss')
 plt.show()
+
+
+from knockknock import discord_sender
+webhook_url = "https://discord.com/api/webhooks/1014081244734173274/kCGlk4rXRPb4LSOdf4ECz9P0lvbiHr5tq4EOR2Zf6RPd8OgU8eytgtG2-IjER1abFt4y"
+@discord_sender(webhook_url=webhook_url)
+def DL_notification():
+    #import time
+    #time.sleep(3)
+    #return {'averaged test acc of premodel' : avg_pt}, {'averaged test acc of transfer model' : avg_tl}, {'소요시간' :(terminate_time - start_time)} # Optional return value
+    return {'averaged test acc of premodel': model.evaluate(x_test, y_test)[1]}
+DL_notification()
