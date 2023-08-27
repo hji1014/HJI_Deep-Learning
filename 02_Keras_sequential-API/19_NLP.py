@@ -20,6 +20,7 @@ print("\n원문:\n", text)
 print("\n토큰화:\n", result)
 
 # 단어 빈도수 세기
+
 # 전처리 하려는 세개의 문장을 정합니다.
 
 docs = ['먼저 텍스트의 각 단어를 나누어 토큰화 합니다.',
@@ -27,7 +28,7 @@ docs = ['먼저 텍스트의 각 단어를 나누어 토큰화 합니다.',
         '토큰화 한 결과는 딥러닝에서 사용 할 수 있습니다.',
         ]
 
-# 토큰화 함수를 이용해 전처리 하는 과정입니다.
+# 토큰화 함수를 이용해 전처리 하는 과정입니다. 
 token = Tokenizer()  # 토큰화 함수 지정
 token.fit_on_texts(docs)  # 토큰화 함수에 문장 적용
 
@@ -55,7 +56,7 @@ print(token.word_index)
 x = token.texts_to_sequences(docs)
 print("\n리뷰 텍스트, 토큰화 결과:\n", x)
 
-# 패딩, 서로 다른 길이의 데이터를 4로 맞추어 줍니다.
+# 패딩, 서로 다른 길이의 데이터를 4로 맞추어 줍니다. (배열의 우측부터 채움)
 padded_x = pad_sequences(x, 4)
 print("\n패딩 결과:\n", padded_x)
 
