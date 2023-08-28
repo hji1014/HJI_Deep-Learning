@@ -12,8 +12,8 @@ tf.random.set_seed(3)
 
 train_datagen = ImageDataGenerator(rescale=1./255,
                                   horizontal_flip=True,     #수평 대칭 이미지를 50% 확률로 만들어 추가합니다.
-                                  width_shift_range=0.1,  #전체 크기의 10% 범위에서 좌우로 이동합니다.
-                                  height_shift_range=0.1, #마찬가지로 위, 아래로 이동합니다.
+                                  width_shift_range=0.1,    #전체 크기의 10% 범위에서 좌우로 이동합니다.
+                                  height_shift_range=0.1,   #마찬가지로 위, 아래로 이동합니다.
                                   #rotation_range=5,
                                   #shear_range=0.7,
                                   #zoom_range=[0.9, 2.2],
@@ -38,7 +38,7 @@ test_generator = test_datagen.flow_from_directory(
 
 # 앞서 배운 CNN 모델을 만들어 적용해 보겠습니다.
 model = Sequential()
-model.add(Conv2D(32, (3, 3), input_shape=(150,150,3)))
+model.add(Conv2D(32, (3, 3), input_shape=(150, 150, 3)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
