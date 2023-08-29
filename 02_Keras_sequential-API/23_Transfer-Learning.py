@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,7 +17,7 @@ train_datagen = ImageDataGenerator(rescale=1./255,
                                   fill_mode='nearest')
 
 train_generator = train_datagen.flow_from_directory(
-       '../train',
+       'C:/Users/User/PycharmProjects/py_365/04_Data/AD_train',
        target_size=(150, 150),
        batch_size=5,
        class_mode='binary')
@@ -28,12 +25,12 @@ train_generator = train_datagen.flow_from_directory(
 test_datagen = ImageDataGenerator(rescale=1./255)
 
 test_generator = test_datagen.flow_from_directory(
-       '../test',
+       'C:/Users/User/PycharmProjects/py_365/04_Data/AD_test',
        target_size=(150, 150),
        batch_size=5,
        class_mode='binary')
 
-transfer_model = VGG16(weights='imagenet', include_top=False, input_shape=(150, 150, 3))
+transfer_model = VGG16(weights='imagenet', include_top=False, input_shape=(150, 150, 3))    # weight : None or imagenet, include_top : dense layer 포함할지 말지 결정
 transfer_model.trainable = False
 transfer_model.summary()
 
@@ -53,8 +50,8 @@ history = finetune_model.fit_generator(
        validation_data=test_generator,
        validation_steps=4)
 
-acc= history.history['accuracy']
-val_acc= history.history['val_accuracy']
+acc = history.history['accuracy']
+val_acc = history.history['val_accuracy']
 y_vloss = history.history['val_loss']
 y_loss = history.history['loss']
 
