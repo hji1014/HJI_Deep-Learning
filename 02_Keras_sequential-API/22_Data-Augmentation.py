@@ -26,6 +26,16 @@ train_generator = train_datagen.flow_from_directory(
        batch_size=5,
        class_mode='binary')
 
+# DA 결과 출력
+# augs = train_generator.__getitem__(8)
+#
+# plt.figure(figsize=(16, 8))
+# for i, img in enumerate(augs[0]):
+#     plt.subplot(4, 8, i+1)
+#     plt.title('%.2f' % augs[1][i])
+#     plt.axis('off')
+#     plt.imshow(img.squeeze())
+
 # 테스트 셋은 이미지 부풀리기 과정을 진행하지 않습니다.
 test_datagen = ImageDataGenerator(rescale=1./255)
 
