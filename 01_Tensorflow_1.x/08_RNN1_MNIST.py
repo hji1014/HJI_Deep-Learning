@@ -1,12 +1,24 @@
 # 머신러닝 학습의 Hello World 와 같은 MNIST(손글씨 숫자 인식) 문제를 신경망으로 풀어봅니다.
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+import numpy as np
+from keras.utils import np_utils
+import matplotlib.pyplot as plt
 
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("./mnist/data/", one_hot=True)
+##################
+# 데이터 로드
+##################
+from tensorflow.keras import datasets
+(train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
+train_images, test_images = (train_images / 255.0), (test_images / 255.0)       # normalization 0 to 1
+train_images = np.reshape(train_images, (np.shape(train_images)[0], np.shape(train_images)[1] * np.shape(train_images)[2]))
+test_images = np.reshape(test_images, (np.shape(test_images)[0], np.shape(test_images)[1] * np.shape(test_images)[2]))
+train_labels = np_utils.to_categorical(train_labels)
+test_labels = np_utils.to_categorical(test_labels)
 
-#########
+##################
 # 옵션 설정
-######
+##################
 learning_rate = 0.001
 total_epoch = 30
 batch_size = 128
