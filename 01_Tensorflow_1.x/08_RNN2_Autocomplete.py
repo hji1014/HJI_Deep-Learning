@@ -1,7 +1,10 @@
 # 자연어 처리나 음성 처리 분야에 많이 사용되는 RNN 의 기본적인 사용법을 익힙니다.
 # 4개의 글자를 가진 단어를 학습시켜, 3글자만 주어지면 나머지 한 글자를 추천하여 단어를 완성하는 프로그램입니다.
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy as np
+from keras.utils import np_utils
+import matplotlib.pyplot as plt
 
 
 char_arr = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
