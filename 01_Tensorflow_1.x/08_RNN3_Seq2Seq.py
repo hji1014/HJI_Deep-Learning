@@ -1,7 +1,9 @@
 # 챗봇, 번역, 이미지 캡셔닝등에 사용되는 시퀀스 학습/생성 모델인 Seq2Seq 을 구현해봅니다.
 # 영어 단어를 한국어 단어로 번역하는 프로그램을 만들어봅니다.
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy as np
+import matplotlib.pyplot as plt
 
 # S: 디코딩 입력의 시작을 나타내는 심볼
 # E: 디코딩 출력을 끝을 나타내는 심볼
