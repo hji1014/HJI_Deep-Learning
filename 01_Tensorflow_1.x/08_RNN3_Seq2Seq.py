@@ -3,7 +3,6 @@
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
-import matplotlib.pyplot as plt
 
 # S: 디코딩 입력의 시작을 나타내는 심볼
 # E: 디코딩 출력을 끝을 나타내는 심볼
@@ -19,7 +18,6 @@ dic_len = len(num_dic)
 seq_data = [['word', '단어'], ['wood', '나무'],
             ['game', '놀이'], ['girl', '소녀'],
             ['kiss', '키스'], ['love', '사랑']]
-
 
 def make_batch(seq_data):
     input_batch = []
@@ -42,9 +40,9 @@ def make_batch(seq_data):
     return input_batch, output_batch, target_batch
 
 
-#########
+##################
 # 옵션 설정
-######
+##################
 learning_rate = 0.01
 n_hidden = 128
 total_epoch = 100
@@ -52,9 +50,9 @@ total_epoch = 100
 n_class = n_input = dic_len
 
 
-#########
+##################
 # 신경망 모델 구성
-######
+##################
 # Seq2Seq 모델은 인코더의 입력과 디코더의 입력의 형식이 같다.
 # [batch size, time steps, input size]
 enc_input = tf.placeholder(tf.float32, [None, None, n_input])
@@ -93,9 +91,9 @@ cost = tf.reduce_mean(
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
 
-#########
+##################
 # 신경망 모델 학습
-######
+##################
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
@@ -113,9 +111,9 @@ for epoch in range(total_epoch):
 print('최적화 완료!')
 
 
-#########
+##################
 # 번역 테스트
-######
+##################
 # 단어를 입력받아 번역 단어를 예측하고 디코딩하는 함수
 def translate(word):
     # 이 모델은 입력값과 출력값 데이터로 [영어단어, 한글단어] 사용하지만,
