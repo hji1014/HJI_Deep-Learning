@@ -31,9 +31,9 @@ n_step = 28
 n_hidden = 128
 n_class = 10
 
-#########
+##################
 # 신경망 모델 구성
-######
+##################
 X = tf.placeholder(tf.float32, [None, n_step, n_input])
 Y = tf.placeholder(tf.float32, [None, n_class])
 
@@ -69,19 +69,22 @@ model = tf.matmul(outputs, W) + b
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=Y))
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
-#########
+##################
 # 신경망 모델 학습
-######
+##################
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
-total_batch = int(mnist.train.num_examples/batch_size)
+batch_size = 100
+total_batch = int(np.shape(train_images)[0] / batch_size)
 
 for epoch in range(total_epoch):
     total_cost = 0
 
     for i in range(total_batch):
-        batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+        batch_xs = train_images[(0 + i * batch_size):(batch_size + i * batch_size), :]
+        batch_ys = train_labels[(0 + i * batch_size):(batch_size + i * batch_size), :]
+        batch_xs = batch_xs.reshape(-1, 28, 28)
         # X 데이터를 RNN 입력 데이터에 맞게 [batch_size, n_step, n_input] 형태로 변환합니다.
         batch_xs = batch_xs.reshape((batch_size, n_step, n_input))
 
@@ -94,15 +97,13 @@ for epoch in range(total_epoch):
 
 print('최적화 완료!')
 
-#########
+##################
 # 결과 확인
-######
+##################
 is_correct = tf.equal(tf.argmax(model, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
-test_batch_size = len(mnist.test.images)
-test_xs = mnist.test.images.reshape(test_batch_size, n_step, n_input)
-test_ys = mnist.test.labels
+test_images = test_images.reshape(-1, 28, 28)
 
 print('정확도:', sess.run(accuracy,
-                       feed_dict={X: test_xs, Y: test_ys}))
+                       feed_dict={X: test_images, Y: test_labels}))
