@@ -3,7 +3,6 @@
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 char_arr = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
@@ -20,7 +19,6 @@ dic_len = len(num_dic)
 # wor -> X, d -> Y
 # woo -> X, d -> Y
 seq_data = ['word', 'wood', 'deep', 'dive', 'cold', 'cool', 'load', 'love', 'kiss', 'kind']
-
 
 def make_batch(seq_data):
     input_batch = []
@@ -47,9 +45,9 @@ def make_batch(seq_data):
 
     return input_batch, target_batch
 
-#########
+##################
 # 옵션 설정
-######
+##################
 learning_rate = 0.01
 n_hidden = 128
 total_epoch = 30
@@ -61,9 +59,9 @@ n_step = 3
 # 출력값도 입력값과 마찬가지로 26개의 알파벳으로 분류합니다.
 n_input = n_class = dic_len
 
-#########
+##################
 # 신경망 모델 구성
-######
+##################
 X = tf.placeholder(tf.float32, [None, n_step, n_input])
 # 비용함수에 sparse_softmax_cross_entropy_with_logits 을 사용하므로
 # 출력값과의 계산을 위한 원본값의 형태는 one-hot vector가 아니라 인덱스 숫자를 그대로 사용하기 때문에
@@ -100,9 +98,9 @@ cost = tf.reduce_mean(
 
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
-#########
+##################
 # 신경망 모델 학습
-######
+##################
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
@@ -117,9 +115,9 @@ for epoch in range(total_epoch):
 
 print('최적화 완료!')
 
-#########
+##################
 # 결과 확인
-######
+##################
 # 레이블값이 정수이므로 예측값도 정수로 변경해줍니다.
 prediction = tf.cast(tf.argmax(model, 1), tf.int32)
 # one-hot 인코딩이 아니므로 입력값을 그대로 비교합니다.
