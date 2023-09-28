@@ -59,7 +59,8 @@ def main():
     performace_test = model.evaluate(X_test, y_test, batch_size=100)
     print('\nTest Loss -> {:.2f}'.format(performace_test))
 
-    plot_loss(history)
+    plot_loss(history, title='happy day')
+    # plot_loss(history, title='loss graph')
     plt.show()
 
     # 예측값 뽑기 -> y_test랑 비교
