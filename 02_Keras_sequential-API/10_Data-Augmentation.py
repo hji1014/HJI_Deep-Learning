@@ -21,7 +21,7 @@ train_datagen = ImageDataGenerator(rescale=1./255,          # Data Augmentation 
                                   fill_mode='nearest')
 
 train_generator = train_datagen.flow_from_directory(
-       'C:/Users/User/PycharmProjects/py_365/04_Data/AD_train',   # 학습셋이 있는 폴더의 위치입니다.
+       'C:/Users/User/PycharmProjects/py_365/04_Data/01_AD/AD_train',   # 학습셋이 있는 폴더의 위치입니다.
        target_size=(150, 150),
        batch_size=5,
        class_mode='binary')
@@ -40,7 +40,7 @@ train_generator = train_datagen.flow_from_directory(
 test_datagen = ImageDataGenerator(rescale=1./255)
 
 test_generator = test_datagen.flow_from_directory(
-       'C:/Users/User/PycharmProjects/py_365/04_Data/AD_test',   # 테스트셋이 있는 폴더의 위치입니다.
+       'C:/Users/User/PycharmProjects/py_365/04_Data/01_AD/AD_test',   # 테스트셋이 있는 폴더의 위치입니다.
        target_size=(150, 150),
        batch_size=5,
        class_mode='binary')
