@@ -17,7 +17,7 @@ train_datagen = ImageDataGenerator(rescale=1./255,
                                   fill_mode='nearest')
 
 train_generator = train_datagen.flow_from_directory(
-       'C:/Users/User/PycharmProjects/py_365/04_Data/AD_train',
+       'C:/Users/User/PycharmProjects/py_365/04_Data/01_AD/AD_train',
        target_size=(150, 150),
        batch_size=5,
        class_mode='binary')
@@ -25,7 +25,7 @@ train_generator = train_datagen.flow_from_directory(
 test_datagen = ImageDataGenerator(rescale=1./255)
 
 test_generator = test_datagen.flow_from_directory(
-       'C:/Users/User/PycharmProjects/py_365/04_Data/AD_test',
+       'C:/Users/User/PycharmProjects/py_365/04_Data/01_AD/AD_test',
        target_size=(150, 150),
        batch_size=5,
        class_mode='binary')
