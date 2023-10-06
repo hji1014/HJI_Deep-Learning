@@ -1,5 +1,6 @@
 ## Deep Learning study
 [using Tensorflow, Keras]  
+-> 가상환경명 : py_365  
   
 - development environment :  
 Python 3.6  
@@ -13,6 +14,7 @@ Numpy 1.19
 2. Keras : https://github.com/jskDr/keraspp, https://github.com/gilbutITbook/080228/tree/master
 
 [using Pytorch]  
+-> 가상환경명 : py_37  
   
 - development environment :  
 Python 3.7.13  
