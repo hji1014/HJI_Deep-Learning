@@ -8,7 +8,6 @@ from torchvision.transforms import ToTensor
 training_data = MNIST(root="./01_DL_practice/01_Pytorch/data", train=True, download=True, transform=ToTensor())
 test_data = MNIST(root="./01_DL_practice/01_Pytorch/data", train=False, download=True, transform=ToTensor())
 
-
 print(len(training_data))           # 학습에 사용할 데이터 개수
 print(len(test_data))               # 평가에 사용할 데이터 개수
 
@@ -17,6 +16,7 @@ for i in range(9):                  # 샘플 이미지를 9개 출력
    plt.imshow(training_data.data[i])
 plt.show()
 
+
 """ 학습 데이터와 평가 데이터의 데이터로더 정의 """
 from torch.utils.data.dataloader import DataLoader
 
@@ -24,6 +24,7 @@ train_loader = DataLoader(training_data, batch_size=32, shuffle=True)
 
 # ❶평가용은 데이터를 섞을 필요가 없음
 test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
+
 
 """ 손글씨 분류 모델 학습하기 """
 import torch
@@ -59,6 +60,7 @@ for epoch in range(20):
    print(f"epoch{epoch+1} loss:{loss.item()}")
 
 torch.save(model.state_dict(), "./01_DL_practice/01_Pytorch/model/MNIST.pth") # ➍ 모델을 MNIST.pth라는 이름으로 저장
+
 
 """ 모델의 성능 평가 """
 # ❶ 모델 가중치 불러오기
