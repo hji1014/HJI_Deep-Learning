@@ -16,6 +16,12 @@ https://wikidocs.net/31379
 https://wikidocs.net/89786
 """
 
+""" 
+[HJI Note]
+import tensorflow_datasets에서 에러 발생 시
+-> '국립암센터 개인컴퓨터 딥러닝 개발환경 총정리.word' 파일 확인
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -385,7 +391,7 @@ plt.xlabel("Train Step")
 
 import pandas as pd
 import urllib.request
-#import tensorflow_datasets as tfds
+import tensorflow_datasets as tfds
 import tensorflow as tf
 import time
 import numpy as np
