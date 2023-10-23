@@ -348,7 +348,7 @@ small_transformer = transformer(
     name="small_transformer")
 
 tf.keras.utils.plot_model(
-    small_transformer, to_file='small_transformer.png', show_shapes=True)
+    small_transformer, to_file='./01_DL_practice/01_Tensorflow_2.x/01_Basic_Transformer/small_transformer.png', show_shapes=True)
 
 def loss_function(y_true, y_pred):
   y_true = tf.reshape(y_true, shape=(-1, MAX_LENGTH - 1))
@@ -385,16 +385,16 @@ plt.xlabel("Train Step")
 
 import pandas as pd
 import urllib.request
-import tensorflow_datasets as tfds
+#import tensorflow_datasets as tfds
 import tensorflow as tf
 import time
 import numpy as np
 import matplotlib.pyplot as plt
 import re
 
-urllib.request.urlretrieve("https://raw.githubusercontent.com/songys/Chatbot_data/master/ChatbotData.csv", filename="ChatBotData.csv")
+urllib.request.urlretrieve("https://raw.githubusercontent.com/songys/Chatbot_data/master/ChatbotData.csv", filename="./01_DL_practice/01_Tensorflow_2.x/01_Basic_Transformer/ChatBotData.csv")
 
-train_data = pd.read_csv('ChatBotData.csv')
+train_data = pd.read_csv('./01_DL_practice/01_Tensorflow_2.x/01_Basic_Transformer/ChatBotData.csv')
 train_data.head()
 
 print('챗봇 샘플의 개수 :', len(train_data))
