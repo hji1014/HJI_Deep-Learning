@@ -32,3 +32,9 @@ lines = pd.read_csv('./01_DL_practice/01_Tensorflow_2.x/02_Basic_Seq2Seq/fra-eng
 del lines['lic']
 print('전체 샘플의 개수 :', len(lines))
 
+lines = lines.loc[:, 'src':'tar']
+lines = lines[0: 60000]     # 6만개만 저장
+print(lines.sample(10))
+
+lines.tar = lines.tar.apply(lambda x : '\t '+ x + ' \n')
+print(lines.sample(10))
