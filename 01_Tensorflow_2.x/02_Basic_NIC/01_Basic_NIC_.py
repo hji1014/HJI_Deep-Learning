@@ -1,358 +1,270 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
+"""
+ref :
+https://www.kaggle.com/code/quadeer15sh/flickr8k-image-captioning-using-cnns-lstms/notebook,
+https://github.com/quadeer15sh/Flickr8K-Image-Captioning/blob/a3e31d345d5260980a653245c07e492bd4cdfb06/flickr8k-image-captioning-using-cnns-lstms.ipynb
 
-"""Image-to-text implementation based on http://arxiv.org/abs/1411.4555.
-
-"Show and Tell: A Neural Image Caption Generator"
-Oriol Vinyals, Alexander Toshev, Samy Bengio, Dumitru Erhan
+추가로 참고할 만한 ref : https://github.com/mybirth0407/show_and_tell_implementation,
+https://github.com/solaris33/deep-learning-tensorflow-book-code/blob/master/Ch09-Image_Captioning/im2txt/im2txt/show_and_tell_model.py
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-
+import numpy as np
+import pandas as pd
+import os
 import tensorflow as tf
+from tqdm import tqdm
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import Sequence
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D, Activation, Dropout, Flatten, Dense, Input, Layer
+from tensorflow.keras.layers import Embedding, LSTM, add, Concatenate, Reshape, concatenate, Bidirectional
+from tensorflow.keras.applications import VGG16, ResNet50, DenseNet201
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+import warnings
+import matplotlib.pyplot as plt
+import seaborn as sns
+from textwrap import wrap
 
-from im2txt.ops import image_embedding
-from im2txt.ops import image_processing
-from im2txt.ops import inputs as input_ops
+#plt.rcParams['font.size'] = 12
+#sns.set_style("dark")
+#warnings.filterwarnings('ignore')
 
+image_path = './01_DL_practice/01_Tensorflow_2.x/02_Basic_NIC/show_and_tell_implementation-master/Flickr8k_Dataset/'
+data = pd.read_csv('./01_DL_practice/01_Tensorflow_2.x/02_Basic_NIC/show_and_tell_implementation-master/Flickr8k_text/captions.txt')
+print(data.head())
 
-class ShowAndTellModel(object):
-  """Image-to-text implementation based on http://arxiv.org/abs/1411.4555.
+def readImage(path, img_size=224):
+    img = load_img(path, color_mode='rgb', target_size=(img_size, img_size))
+    img = img_to_array(img)
+    img = img / 255.
 
-  "Show and Tell: A Neural Image Caption Generator"
-  Oriol Vinyals, Alexander Toshev, Samy Bengio, Dumitru Erhan
-  """
+    return img
 
-  def __init__(self, config, mode, train_inception=False):
-    """Basic setup.
+def display_images(temp_df):
+    temp_df = temp_df.reset_index(drop=True)
+    plt.figure(figsize=(20, 20))
+    n = 0
+    for i in range(15):
+        n += 1
+        plt.subplot(5, 5, n)
+        plt.subplots_adjust(hspace=0.7, wspace=0.3)
+        image = readImage(f"./01_DL_practice/01_Tensorflow_2.x/02_Basic_NIC/show_and_tell_implementation-master/Flickr8k_Dataset/{temp_df.image[i]}")
+        plt.imshow(image)
+        plt.title("\n".join(wrap(temp_df.caption[i], 20)))
+        plt.axis("off")
 
-    Args:
-      config: Object containing configuration parameters.
-      mode: "train", "eval" or "inference".
-      train_inception: Whether the inception submodel variables are trainable.
-    """
-    assert mode in ["train", "eval", "inference"]
-    self.config = config
-    self.mode = mode
-    self.train_inception = train_inception
+# Visuallization
+#display_images(data.sample(15))
 
-    # Reader for the input data.
-    self.reader = tf.TFRecordReader()
+def text_preprocessing(data):
+    data['caption'] = data['caption'].apply(lambda x: x.lower())
+    data['caption'] = data['caption'].apply(lambda x: x.replace("[^A-Za-z]", ""))
+    data['caption'] = data['caption'].apply(lambda x: x.replace("\s+", " "))
+    data['caption'] = data['caption'].apply(lambda x: " ".join([word for word in x.split() if len(word) > 1]))
+    data['caption'] = "startseq "+data['caption']+" endseq"
+    return data
 
-    # To match the "Show and Tell" paper we initialize all variables with a
-    # random uniform initializer.
-    self.initializer = tf.random_uniform_initializer(
-        minval=-self.config.initializer_scale,
-        maxval=self.config.initializer_scale)
+""" Text Preprocessing """
+data = text_preprocessing(data)
+captions = data['caption'].tolist()
+print(captions[:10])
 
-    # A float32 Tensor with shape [batch_size, height, width, channels].
-    self.images = None
+""" Tokenization and Encoded Representation """
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(captions)
+vocab_size = len(tokenizer.word_index) + 1
+max_length = max(len(caption.split()) for caption in captions)
 
-    # An int32 Tensor with shape [batch_size, padded_length].
-    self.input_seqs = None
+images = data['image'].unique().tolist()
+nimages = len(images)
 
-    # An int32 Tensor with shape [batch_size, padded_length].
-    self.target_seqs = None
+split_index = round(0.85*nimages)
+train_images = images[:split_index]
+val_images = images[split_index:]
 
-    # An int32 0/1 Tensor with shape [batch_size, padded_length].
-    self.input_mask = None
+train = data[data['image'].isin(train_images)]
+test = data[data['image'].isin(val_images)]
 
-    # A float32 Tensor with shape [batch_size, embedding_size].
-    self.image_embeddings = None
+train.reset_index(inplace=True, drop=True)
+test.reset_index(inplace=True, drop=True)
 
-    # A float32 Tensor with shape [batch_size, padded_length, embedding_size].
-    self.seq_embeddings = None
+print(tokenizer.texts_to_sequences([captions[1]])[0])
 
-    # A float32 scalar Tensor; the total loss for the trainer to optimize.
-    self.total_loss = None
+""" Image Feature Extraction """
+model = DenseNet201()
+fe = Model(inputs=model.input, outputs=model.layers[-2].output)
 
-    # A float32 Tensor with shape [batch_size * padded_length].
-    self.target_cross_entropy_losses = None
+img_size = 224
+features = {}
+for image in tqdm(data['image'].unique().tolist()):
+    img = load_img(os.path.join(image_path, image), target_size=(img_size, img_size))
+    img = img_to_array(img)
+    img = img/255.
+    img = np.expand_dims(img, axis=0)
+    feature = fe.predict(img, verbose=0)
+    features[image] = feature       # vector size : 1920
 
-    # A float32 Tensor with shape [batch_size * padded_length].
-    self.target_cross_entropy_loss_weights = None
+""" Data Generation """
+class CustomDataGenerator(Sequence):
+    def __init__(self, df, X_col, y_col, batch_size, directory, tokenizer,
+                 vocab_size, max_length, features, shuffle=True):
 
-    # Collection of variables from the inception submodel.
-    self.inception_variables = []
+        self.df = df.copy()
+        self.X_col = X_col
+        self.y_col = y_col
+        self.directory = directory
+        self.batch_size = batch_size
+        self.tokenizer = tokenizer
+        self.vocab_size = vocab_size
+        self.max_length = max_length
+        self.features = features
+        self.shuffle = shuffle
+        self.n = len(self.df)
 
-    # Function to restore the inception submodel from checkpoint.
-    self.init_fn = None
+    def on_epoch_end(self):
+        if self.shuffle:
+            self.df = self.df.sample(frac=1).reset_index(drop=True)
 
-    # Global step Tensor.
-    self.global_step = None
+    def __len__(self):
+        return self.n // self.batch_size
 
-  def is_training(self):
-    """Returns true if the model is built for training mode."""
-    return self.mode == "train"
+    def __getitem__(self, index):
 
-  def process_image(self, encoded_image, thread_id=0):
-    """Decodes and processes an image string.
+        batch = self.df.iloc[index * self.batch_size:(index + 1) * self.batch_size, :]
+        X1, X2, y = self.__get_data(batch)
+        return (X1, X2), y
 
-    Args:
-      encoded_image: A scalar string Tensor; the encoded image.
-      thread_id: Preprocessing thread id used to select the ordering of color
-        distortions.
+    def __get_data(self, batch):
 
-    Returns:
-      A float32 Tensor of shape [height, width, 3]; the processed image.
-    """
-    return image_processing.process_image(encoded_image,
-                                          is_training=self.is_training(),
-                                          height=self.config.image_height,
-                                          width=self.config.image_width,
-                                          thread_id=thread_id,
-                                          image_format=self.config.image_format)
+        X1, X2, y = list(), list(), list()
 
-  def build_inputs(self):
-    """Input prefetching, preprocessing and batching.
+        images = batch[self.X_col].tolist()
 
-    Outputs:
-      self.images
-      self.input_seqs
-      self.target_seqs (training and eval only)
-      self.input_mask (training and eval only)
-    """
-    if self.mode == "inference":
-      # In inference mode, images and inputs are fed via placeholders.
-      image_feed = tf.placeholder(dtype=tf.string, shape=[], name="image_feed")
-      input_feed = tf.placeholder(dtype=tf.int64,
-                                  shape=[None],  # batch_size
-                                  name="input_feed")
+        for image in images:
+            feature = self.features[image][0]
 
-      # Process image and insert batch dimensions.
-      images = tf.expand_dims(self.process_image(image_feed), 0)
-      input_seqs = tf.expand_dims(input_feed, 1)
+            captions = batch.loc[batch[self.X_col] == image, self.y_col].tolist()
+            for caption in captions:
+                seq = self.tokenizer.texts_to_sequences([caption])[0]
 
-      # No target sequences or input mask in inference mode.
-      target_seqs = None
-      input_mask = None
-    else:
-      # Prefetch serialized SequenceExample protos.
-      input_queue = input_ops.prefetch_input_data(
-          self.reader,
-          self.config.input_file_pattern,
-          is_training=self.is_training(),
-          batch_size=self.config.batch_size,
-          values_per_shard=self.config.values_per_input_shard,
-          input_queue_capacity_factor=self.config.input_queue_capacity_factor,
-          num_reader_threads=self.config.num_input_reader_threads)
+                for i in range(1, len(seq)):
+                    in_seq, out_seq = seq[:i], seq[i]
+                    in_seq = pad_sequences([in_seq], maxlen=self.max_length)[0]
+                    out_seq = to_categorical([out_seq], num_classes=self.vocab_size)[0]
+                    X1.append(feature)
+                    X2.append(in_seq)
+                    y.append(out_seq)
 
-      # Image processing and random distortion. Split across multiple threads
-      # with each thread applying a slightly different distortion.
-      assert self.config.num_preprocess_threads % 2 == 0
-      images_and_captions = []
-      for thread_id in range(self.config.num_preprocess_threads):
-        serialized_sequence_example = input_queue.dequeue()
-        encoded_image, caption = input_ops.parse_sequence_example(
-            serialized_sequence_example,
-            image_feature=self.config.image_feature_name,
-            caption_feature=self.config.caption_feature_name)
-        image = self.process_image(encoded_image, thread_id=thread_id)
-        images_and_captions.append([image, caption])
+        X1, X2, y = np.array(X1), np.array(X2), np.array(y)
 
-      # Batch inputs.
-      queue_capacity = (2 * self.config.num_preprocess_threads *
-                        self.config.batch_size)
-      images, input_seqs, target_seqs, input_mask = (
-          input_ops.batch_with_dynamic_pad(images_and_captions,
-                                           batch_size=self.config.batch_size,
-                                           queue_capacity=queue_capacity))
+        return X1, X2, y
 
-    self.images = images
-    self.input_seqs = input_seqs
-    self.target_seqs = target_seqs
-    self.input_mask = input_mask
+""" Modelling """
+input1 = Input(shape=(1920,))
+input2 = Input(shape=(max_length,))
 
-  def build_image_embeddings(self):
-    """Builds the image model subgraph and generates image embeddings.
+img_features = Dense(256, activation='relu')(input1)
+img_features_reshaped = Reshape((1, 256), input_shape=(256,))(img_features)
 
-    Inputs:
-      self.images
+sentence_features = Embedding(vocab_size, 256, mask_zero=False)(input2)
+merged = concatenate([img_features_reshaped, sentence_features], axis=1)
+sentence_features = LSTM(256)(merged)
+x = Dropout(0.5)(sentence_features)
+x = add([x, img_features])
+x = Dense(128, activation='relu')(x)
+x = Dropout(0.5)(x)
+output = Dense(vocab_size, activation='softmax')(x)
 
-    Outputs:
-      self.image_embeddings
-    """
-    inception_output = image_embedding.inception_v3(
-        self.images,
-        trainable=self.train_inception,
-        is_training=self.is_training())
-    self.inception_variables = tf.get_collection(
-        tf.GraphKeys.GLOBAL_VARIABLES, scope="InceptionV3")
+caption_model = Model(inputs=[input1, input2], outputs=output)
+caption_model.compile(loss='categorical_crossentropy', optimizer='adam')
 
-    # Map inception output into embedding space.
-    with tf.variable_scope("image_embedding") as scope:
-      image_embeddings = tf.contrib.layers.fully_connected(
-          inputs=inception_output,
-          num_outputs=self.config.embedding_size,
-          activation_fn=None,
-          weights_initializer=self.initializer,
-          biases_initializer=None,
-          scope=scope)
+""" Model Modification """
+# Model Structure
+#from tensorflow.keras.utils import plot_model
+#plot_model(caption_model)
+caption_model.summary()
 
-    # Save the embedding size in the graph.
-    tf.constant(self.config.embedding_size, name="embedding_size")
+train_generator = CustomDataGenerator(df=train, X_col='image', y_col='caption', batch_size=64, directory=image_path,
+                                      tokenizer=tokenizer, vocab_size=vocab_size, max_length=max_length, features=features)
 
-    self.image_embeddings = image_embeddings
+validation_generator = CustomDataGenerator(df=test, X_col='image', y_col='caption', batch_size=64, directory=image_path,
+                                      tokenizer=tokenizer, vocab_size=vocab_size, max_length=max_length, features=features)
 
-  def build_seq_embeddings(self):
-    """Builds the input sequence embeddings.
+model_name = "model.h5"
+checkpoint = ModelCheckpoint(model_name,
+                            monitor="val_loss",
+                            mode="min",
+                            save_best_only = True,
+                            verbose=1)
 
-    Inputs:
-      self.input_seqs
+earlystopping = EarlyStopping(monitor='val_loss',min_delta = 0, patience = 5, verbose = 1, restore_best_weights=True)
 
-    Outputs:
-      self.seq_embeddings
-    """
-    with tf.variable_scope("seq_embedding"), tf.device("/cpu:0"):
-      embedding_map = tf.get_variable(
-          name="map",
-          shape=[self.config.vocab_size, self.config.embedding_size],
-          initializer=self.initializer)
-      seq_embeddings = tf.nn.embedding_lookup(embedding_map, self.input_seqs)
+learning_rate_reduction = ReduceLROnPlateau(monitor='val_loss',
+                                            patience=3,
+                                            verbose=1,
+                                            factor=0.2,
+                                            min_lr=0.00000001)
 
-    self.seq_embeddings = seq_embeddings
+history = caption_model.fit(
+        train_generator,
+        epochs=50,
+        validation_data=validation_generator,
+        callbacks=[checkpoint, earlystopping, learning_rate_reduction])
+#model.save_weights('model_weights.h5')
+model.load_weights('./01_DL_practice/01_Tensorflow_2.x/02_Basic_NIC/model_weights.h5')
 
-  def build_model(self):
-    """Builds the model.
+""" Learning Curve """
+plt.figure(figsize=(10,10))
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'val'], loc='upper left')
+plt.show()
 
-    Inputs:
-      self.image_embeddings
-      self.seq_embeddings
-      self.target_seqs (training and eval only)
-      self.input_mask (training and eval only)
+""" Caption Generation Utillity Functions """
+def idx_to_word(integer, tokenizer):
+    for word, index in tokenizer.word_index.items():
+        if index == integer:
+            return word
+    return None
 
-    Outputs:
-      self.total_loss (training and eval only)
-      self.target_cross_entropy_losses (training and eval only)
-      self.target_cross_entropy_loss_weights (training and eval only)
-    """
-    # This LSTM cell has biases and outputs tanh(new_c) * sigmoid(o), but the
-    # modified LSTM in the "Show and Tell" paper has no biases and outputs
-    # new_c * sigmoid(o).
-    lstm_cell = tf.contrib.rnn.BasicLSTMCell(
-        num_units=self.config.num_lstm_units, state_is_tuple=True)
-    if self.mode == "train":
-      lstm_cell = tf.contrib.rnn.DropoutWrapper(
-          lstm_cell,
-          input_keep_prob=self.config.lstm_dropout_keep_prob,
-          output_keep_prob=self.config.lstm_dropout_keep_prob)
+def predict_caption(model, image, tokenizer, max_length, features):
+    feature = features[image]
+    in_text = "startseq"
+    for i in range(max_length):
+        sequence = tokenizer.texts_to_sequences([in_text])[0]
+        sequence = pad_sequences([sequence], max_length)
 
-    with tf.variable_scope("lstm", initializer=self.initializer) as lstm_scope:
-      # Feed the image embeddings to set the initial LSTM state.
-      zero_state = lstm_cell.zero_state(
-          batch_size=self.image_embeddings.get_shape()[0], dtype=tf.float32)
-      _, initial_state = lstm_cell(self.image_embeddings, zero_state)
+        y_pred = model.predict([feature, sequence])
+        y_pred = np.argmax(y_pred)
 
-      # Allow the LSTM variables to be reused.
-      lstm_scope.reuse_variables()
+        word = idx_to_word(y_pred, tokenizer)
 
-      if self.mode == "inference":
-        # In inference mode, use concatenated states for convenient feeding and
-        # fetching.
-        tf.concat(axis=1, values=initial_state, name="initial_state")
+        if word is None:
+            break
 
-        # Placeholder for feeding a batch of concatenated states.
-        state_feed = tf.placeholder(dtype=tf.float32,
-                                    shape=[None, sum(lstm_cell.state_size)],
-                                    name="state_feed")
-        state_tuple = tf.split(value=state_feed, num_or_size_splits=2, axis=1)
+        in_text += " " + word
 
-        # Run a single LSTM step.
-        lstm_outputs, state_tuple = lstm_cell(
-            inputs=tf.squeeze(self.seq_embeddings, axis=[1]),
-            state=state_tuple)
+        if word == 'endseq':
+            break
 
-        # Concatentate the resulting state.
-        tf.concat(axis=1, values=state_tuple, name="state")
-      else:
-        # Run the batch of sequence embeddings through the LSTM.
-        sequence_length = tf.reduce_sum(self.input_mask, 1)
-        lstm_outputs, _ = tf.nn.dynamic_rnn(cell=lstm_cell,
-                                            inputs=self.seq_embeddings,
-                                            sequence_length=sequence_length,
-                                            initial_state=initial_state,
-                                            dtype=tf.float32,
-                                            scope=lstm_scope)
+    return in_text
 
-    # Stack batches vertically.
-    lstm_outputs = tf.reshape(lstm_outputs, [-1, lstm_cell.output_size])
+""" Taking 15 Random Samples for Caption Prediction """
+samples = test.sample(15)
+samples.reset_index(drop=True, inplace=True)
 
-    with tf.variable_scope("logits") as logits_scope:
-      logits = tf.contrib.layers.fully_connected(
-          inputs=lstm_outputs,
-          num_outputs=self.config.vocab_size,
-          activation_fn=None,
-          weights_initializer=self.initializer,
-          scope=logits_scope)
+for index, record in samples.iterrows():
+    img = load_img(os.path.join(image_path, record['image']), target_size=(224, 224))
+    img = img_to_array(img)
+    img = img / 255.
 
-    if self.mode == "inference":
-      tf.nn.softmax(logits, name="softmax")
-    else:
-      targets = tf.reshape(self.target_seqs, [-1])
-      weights = tf.to_float(tf.reshape(self.input_mask, [-1]))
+    caption = predict_caption(caption_model, record['image'], tokenizer, max_length, features)
+    samples.loc[index, 'caption'] = caption[8:-7]
 
-      # Compute losses.
-      losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=targets,
-                                                              logits=logits)
-      batch_loss = tf.div(tf.reduce_sum(tf.multiply(losses, weights)),
-                          tf.reduce_sum(weights),
-                          name="batch_loss")
-      tf.losses.add_loss(batch_loss)
-      total_loss = tf.losses.get_total_loss()
-
-      # Add summaries.
-      tf.summary.scalar("losses/batch_loss", batch_loss)
-      tf.summary.scalar("losses/total_loss", total_loss)
-      for var in tf.trainable_variables():
-        tf.summary.histogram("parameters/" + var.op.name, var)
-
-      self.total_loss = total_loss
-      self.target_cross_entropy_losses = losses  # Used in evaluation.
-      self.target_cross_entropy_loss_weights = weights  # Used in evaluation.
-
-  def setup_inception_initializer(self):
-    """Sets up the function to restore inception variables from checkpoint."""
-    if self.mode != "inference":
-      # Restore inception variables only.
-      saver = tf.train.Saver(self.inception_variables)
-
-      def restore_fn(sess):
-        tf.logging.info("Restoring Inception variables from checkpoint file %s",
-                        self.config.inception_checkpoint_file)
-        saver.restore(sess, self.config.inception_checkpoint_file)
-
-      self.init_fn = restore_fn
-
-  def setup_global_step(self):
-    """Sets up the global step Tensor."""
-    global_step = tf.Variable(
-        initial_value=0,
-        name="global_step",
-        trainable=False,
-        collections=[tf.GraphKeys.GLOBAL_STEP, tf.GraphKeys.GLOBAL_VARIABLES])
-
-    self.global_step = global_step
-
-  def build(self):
-    """Creates all ops for training and evaluation."""
-    self.build_inputs()
-    self.build_image_embeddings()
-    self.build_seq_embeddings()
-    self.build_model()
-    self.setup_inception_initializer()
-    self.setup_global_step()
+display_images(samples)
