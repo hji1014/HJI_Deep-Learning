@@ -134,7 +134,7 @@ decoder_inputs = Input(shape=(None, tar_vocab_size))
 decoder_lstm = LSTM(units=256, return_sequences=True, return_state=True)
 
 # 디코더에게 인코더의 은닉 상태, 셀 상태를 전달.
-decoder_outputs, _, _= decoder_lstm(decoder_inputs, initial_state=encoder_states)       # 디코더는 인코더의 마지막 hidden state를 초기 hidden state로 사용
+decoder_outputs, _, _ = decoder_lstm(decoder_inputs, initial_state=encoder_states)       # 디코더는 인코더의 마지막 hidden state를 초기 hidden state로 사용
 
 decoder_softmax_layer = Dense(tar_vocab_size, activation='softmax')
 decoder_outputs = decoder_softmax_layer(decoder_outputs)
