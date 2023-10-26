@@ -167,41 +167,41 @@ index_to_src = dict((i, char) for char, i in src_to_index.items())
 index_to_tar = dict((i, char) for char, i in tar_to_index.items())
 
 def decode_sequence(input_seq):
-  # 입력으로부터 인코더의 상태를 얻음
-  states_value = encoder_model.predict(input_seq)
+    # 입력으로부터 인코더의 상태를 얻음
+    states_value = encoder_model.predict(input_seq)
 
-  # 에 해당하는 원-핫 벡터 생성
-  target_seq = np.zeros((1, 1, tar_vocab_size))
-  target_seq[0, 0, tar_to_index['\t']] = 1.
-
-  stop_condition = False
-  decoded_sentence = ""
-
-  # stop_condition이 True가 될 때까지 루프 반복
-  while not stop_condition:
-    # 이점 시점의 상태 states_value를 현 시점의 초기 상태로 사용
-    output_tokens, h, c = decoder_model.predict([target_seq] + states_value)
-
-    # 예측 결과를 문자로 변환
-    sampled_token_index = np.argmax(output_tokens[0, -1, :])
-    sampled_char = index_to_tar[sampled_token_index]
-
-    # 현재 시점의 예측 문자를 예측 문장에 추가
-    decoded_sentence += sampled_char
-
-    # 에 도달하거나 최대 길이를 넘으면 중단.
-    if (sampled_char == '\n' or
-        len(decoded_sentence) > max_tar_len):
-        stop_condition = True
-
-    # 현재 시점의 예측 결과를 다음 시점의 입력으로 사용하기 위해 저장
+    # 에 해당하는 원-핫 벡터 생성
     target_seq = np.zeros((1, 1, tar_vocab_size))
-    target_seq[0, 0, sampled_token_index] = 1.
+    target_seq[0, 0, tar_to_index['\t']] = 1.
 
-    # 현재 시점의 상태를 다음 시점의 상태로 사용하기 위해 저장
-    states_value = [h, c]
+    stop_condition = False
+    decoded_sentence = ""
 
-  return decoded_sentence
+    # stop_condition이 True가 될 때까지 루프 반복
+    while not stop_condition:
+        # 이점 시점의 상태 states_value를 현 시점의 초기 상태로 사용
+        output_tokens, h, c = decoder_model.predict([target_seq] + states_value)
+
+        # 예측 결과를 문자로 변환
+        sampled_token_index = np.argmax(output_tokens[0, -1, :])
+        sampled_char = index_to_tar[sampled_token_index]
+
+        # 현재 시점의 예측 문자를 예측 문장에 추가
+        decoded_sentence += sampled_char
+
+        # <eos>에 도달하거나 최대 길이를 넘으면 중단.
+        if (sampled_char == '\n' or
+            len(decoded_sentence) > max_tar_len):
+            stop_condition = True
+
+        # 현재 시점의 예측 결과를 다음 시점의 입력으로 사용하기 위해 저장
+        target_seq = np.zeros((1, 1, tar_vocab_size))
+        target_seq[0, 0, sampled_token_index] = 1.
+
+        # 현재 시점의 상태를 다음 시점의 상태로 사용하기 위해 저장
+        states_value = [h, c]
+
+    return decoded_sentence
 
 for seq_index in [34, 505, 130, 340, 1001]: # 입력 문장의 인덱스
     input_seq = encoder_input[seq_index:seq_index+1]
