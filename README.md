@@ -27,4 +27,6 @@ Pandas 1.3.5
 Matplotlib 3.5.3
   
 - reference :  
-1. Pytorch : https://github.com/keon/3-min-pytorch, https://pytorch.kr/?_gl=1*4puxqd*_ga*NDg1OTQ0NzYxLjE2OTQ5NTc5NjY.*_ga_LZRD6GXDLF*MTY5NDk1Nzk2Ni4xLjEuMTY5NDk1ODEyMi41NS4wLjA., https://pytorch.org/
+1. Pytorch : https://github.com/keon/3-min-pytorch, https://pytorch.kr/?_gl=1*4puxqd*_ga*NDg1OTQ0NzYxLjE2OTQ5NTc5NjY.*_ga_LZRD6GXDLF*MTY5NDk1Nzk2Ni4xLjEuMTY5NDk1ODEyMi41NS4wLjA., https://pytorch.org/  
+** 책 : 텐초의 파이토치 딥러닝 특강, 파이토치 딥러닝 마스터  
+  
