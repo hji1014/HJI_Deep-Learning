@@ -220,6 +220,7 @@ model = CNN(num_classes=10)
 # ➎ 모델을 device로 보냄
 model.to(device)
 
+
 """ 모델 학습하기 """
 # ❶ 학습률 정의
 lr = 1e-3
