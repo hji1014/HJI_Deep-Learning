@@ -122,7 +122,7 @@ from tensorflow.keras.layers import Input, LSTM, Embedding, Dense
 from tensorflow.keras.models import Model
 
 encoder_inputs = Input(shape=(None, src_vocab_size))
-encoder_lstm = LSTM(units=256, return_state=True)           # hidden state 크기(=step_size) : 256, 인코더의 내부 상태를 디코더로 넘겨주어야 하기 때문에 True
+encoder_lstm = LSTM(units=256, return_state=True)           # hidden state 크기 : 256, 인코더의 내부 상태를 디코더로 넘겨주어야 하기 때문에 True
 
 # encoder_outputs은 여기서는 불필요
 encoder_outputs, state_h, state_c = encoder_lstm(encoder_inputs)
