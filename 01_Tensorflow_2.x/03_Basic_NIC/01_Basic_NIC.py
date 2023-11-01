@@ -64,7 +64,7 @@ def text_preprocessing(data):
     data['caption'] = data['caption'].apply(lambda x: x.replace("[^A-Za-z]", ""))
     data['caption'] = data['caption'].apply(lambda x: x.replace("\s+", " "))
     data['caption'] = data['caption'].apply(lambda x: " ".join([word for word in x.split() if len(word) > 1]))
-    data['caption'] = "startseq "+data['caption']+" endseq"
+    data['caption'] = "startseq " + data['caption'] + " endseq"
     return data
 
 """ Text Preprocessing """
@@ -202,8 +202,8 @@ checkpoint = ModelCheckpoint(model_name,
 
 earlystopping = EarlyStopping(monitor='val_loss',min_delta = 0, patience = 5, verbose = 1, restore_best_weights=True)
 
-learning_rate_reduction = ReduceLROnPlateau(monitor='val_loss',
-                                            patience=3,
+learning_rate_reduction = ReduceLROnPlateau(monitor='val_loss',         # 3번 동안 val_loss 개선 없을 시
+                                            patience=3,                 # lr * 0.2 반복
                                             verbose=1,
                                             factor=0.2,
                                             min_lr=0.00000001)
