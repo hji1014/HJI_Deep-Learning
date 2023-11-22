@@ -280,8 +280,8 @@ pred = model(torch.unsqueeze(data.to(device), dim=0)) > 0.5  # ❶ 픽셀을 이
 with torch.no_grad():
     plt.subplot(1, 2, 1)
     plt.title("Predicted")
-    plt.imshow(pred)
+    plt.imshow(pred.cpu())
     plt.subplot(1, 2, 2)
     plt.title("Real")
-    plt.imshow(label)
+    plt.imshow(label.cpu())
     plt.show()
