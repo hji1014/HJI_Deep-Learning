@@ -1,3 +1,21 @@
+"""
+[지워야 할 데이터]
+
+./data/oxford/images\Abyssinian_34.jpg (202, 250)
+./data/oxford/images\Abyssinian_5.jpg (150, 200, 4)
+./data/oxford/images\Egyptian_Mau_129.jpg (325, 299)
+./data/oxford/images\Egyptian_Mau_139.jpg (250, 350)
+./data/oxford/images\Egyptian_Mau_14.jpg (800, 582, 4)
+./data/oxford/images\Egyptian_Mau_145.jpg (188, 216)
+./data/oxford/images\Egyptian_Mau_167.jpg (275, 183)
+./data/oxford/images\Egyptian_Mau_177.jpg (175, 246)
+./data/oxford/images\Egyptian_Mau_186.jpg (275, 183, 4)
+./data/oxford/images\Egyptian_Mau_191.jpg (214, 300)
+./data/oxford/images\staffordshire_bull_terrier_2.jpg (282, 500)
+./data/oxford/images\staffordshire_bull_terrier_22.jpg (500, 364)
+
+"""
+
 """ 입력과 정답 이미지 확인 """
 import matplotlib.pyplot as plt
 
@@ -240,7 +258,7 @@ for epoch in range(200):
         optim.zero_grad()  # 이전 루프의 기울기 초기화
 
         preds = model(data.to(device))  # 모델의 예측값 출력
-        loss = nn.BCEWithLogitsLoss()(
+        loss = nn.BCEWithLogitsLoss()(  # BCEWithLogitsLoss 함수에 sigmoid 연산이 들어있기 때문에 따로 신경망에 sigmoid를 추가 X
             preds,
             label.type(torch.FloatTensor).to(device))  # 손실 계산 -> 이 이미지의 채널을 1로 바꿔줘야할 거 같은데? -> 노노 채널 1임
         loss.backward()  # 오차 역전파
