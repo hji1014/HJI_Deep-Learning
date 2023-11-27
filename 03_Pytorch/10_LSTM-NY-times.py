@@ -81,7 +81,7 @@ class LSTM(nn.Module):
     def __init__(self, num_embeddings):
         super(LSTM, self).__init__()
 
-        # ❶ 밀집표현을 위한 임베딩층
+        # ❶ 밀집표현을 위한 임베딩층(num_embeddings=voca size * embedding_dim의 크기를 갖는 lookup table로 생각할 수 있음)
         self.embed = nn.Embedding(
             num_embeddings=num_embeddings, embedding_dim=16)
 
@@ -163,8 +163,13 @@ def generate(model, BOW, string="and now ", strlen=10):
            # ❶
            input_tensor = torch.unsqueeze(words[-2:], dim=0)
            output = model(input_tensor)  # 모델을 이용해 예측
+           #print(output)
+           #print(output.shape)
            output_word = (torch.argmax(output).cpu().numpy())
+           #print(output_word)
+           #print(output_word.shape)
            string += list(BOW.keys())[output_word]  # 문장에 예측된 단어를 추가
+           #print(string)
            string += " "
 
    print(f"predicted sentence: {string}")
