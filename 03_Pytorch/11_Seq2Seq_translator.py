@@ -97,6 +97,7 @@ class Encoder(nn.Module):
 
 
 """ 디코더 정의 """
+# 아마도 Luong Attention을 구현한 듯 함
 class Decoder(nn.Module):
     def __init__(self, hidden_size, output_size, dropout_p=0.1, max_length=11):
         super(Decoder, self).__init__()
