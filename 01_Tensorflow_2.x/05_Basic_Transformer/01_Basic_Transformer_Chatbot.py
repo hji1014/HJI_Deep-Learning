@@ -613,6 +613,3 @@ output = predict("게임하고싶은데 할래?")
 output = predict("나 너 좋아하는 것 같아")
 
 output = predict("딥 러닝 자연어 처리를 잘 하고 싶어")
-
-output = predict("내 여자친구는 지윤이야 인사해 지윤이랑")
-
