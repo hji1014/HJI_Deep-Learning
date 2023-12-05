@@ -1,5 +1,6 @@
 """
 Image Captioning : ViT + GPT2
+datasets : Flickr8k
 ref : https://www.kaggle.com/code/burhanuddinlatsaheb/image-captioning-vit-gpt2/notebook
 """
 
@@ -67,3 +68,31 @@ class config :
     LABEL_MASK = -100
     TOP_K = 1000
     TOP_P = 0.95
+
+
+"""
+[3. Helper Functions]
+"""
+def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None):
+    outputs = [self.bos_token_id] + token_ids_0 + [self.eos_token_id]
+    return outputs
+AutoTokenizer.build_inputs_with_special_tokens = build_inputs_with_special_tokens
+
+rouge = datasets.load_metric("rouge")
+
+def compute_metrics(pred):
+    labels_ids = pred.label_ids
+    pred_ids = pred.predictions
+
+    # all unnecessary tokens are removed
+    pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
+    labels_ids[labels_ids == -100] = tokenizer.pad_token_id
+    label_str = tokenizer.batch_decode(labels_ids, skip_special_tokens=True)
+
+    rouge_output = rouge.compute(predictions=pred_str, references=label_str, rouge_types=["rouge2"])["rouge2"].mid
+
+    return {
+        "rouge2_precision": round(rouge_output.precision, 4),
+        "rouge2_recall": round(rouge_output.recall, 4),
+        "rouge2_fmeasure": round(rouge_output.fmeasure, 4),
+    }
