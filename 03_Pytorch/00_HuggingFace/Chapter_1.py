@@ -77,11 +77,80 @@ unmasker("This course will teach you all about <mask> models.", top_k=2)
 
 
 """
-[5. Named entity recognition(개체명 인식)]
+[5. named entity recognition(개체명 인식)]
 - 아래 예시에서 "Sylvain"이 사람(PER)이고 "Hugging Face"가 조직(ORG)이며 "Brooklyn"이 위치(LOC)임을 올바르게 식별
 - grouped_entities=True 옵션을 전달하면 파이프라인이 동일한 엔티티에 해당하는 문장의 토큰(or 단어)을 그룹화함
 """
 from transformers import pipeline
 
-ner = pipeline("ner", grouped_entities=True)
+ner = pipeline("ner", grouped_entities=True, device=1)
 ner("My name is Sylvain and I work at Hugging Face in Brooklyn.")
+result = ner("My name is Sylvain and I work at Hugging Face in Brooklyn.")          # 결과를 리스트로 저장
+
+# GPU 사용하여 추론하는 방법
+from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
+
+tokenizer = AutoTokenizer.from_pretrained("dslim/bert-large-NER")
+model = AutoModelForTokenClassification.from_pretrained("dslim/bert-large-NER")
+ner = pipeline("ner", model=model, tokenizer=tokenizer, device=0)               # 여기서 사용할 GPU 번호 입력
+print(ner("Hi, My name is Junil!."))
+
+
+"""
+[6. question answering(질의 응답)]
+- 이 파이프라인은 주어진 컨텍스트(context) 정보를 사용하여 입력 질문에 응답을 제공
+- 제공된 컨텍스트에서 정보를 추출하여 작동하고, 응답을 새롭게 생성하지는 않음
+"""
+from transformers import pipeline
+
+question_answerer = pipeline("question-answering")
+question_answerer(
+    question="Where do I work?",
+    context="My name is Sylvain and I work at Hugging Face in Brooklyn",
+)
+
+
+"""
+[7. summarization(요약)]
+- 텍스트에 존재하는 중요한 내용을 유지하면서 해당 텍스트를 요약하는 파이프라인
+- text-generation과 마찬가지로 max_length 또는 min_length 지정이 가능
+"""
+# 이런 식으로 GPU 사용할 수 있음
+from transformers import pipeline
+
+summarizer = pipeline("summarization", device=0)
+for i in range(100):
+    summarizer(
+        """
+        America has changed dramatically during recent years. Not only has the number of 
+        graduates in traditional engineering disciplines such as mechanical, civil, 
+        electrical, chemical, and aeronautical engineering declined, but in most of 
+        the premier American universities engineering curricula now concentrate on 
+        and encourage largely the study of engineering science. As a result, there 
+        are declining offerings in engineering subjects dealing with infrastructure, 
+        the environment, and related issues, and greater concentration on high 
+        technology subjects, largely supporting increasingly complex scientific 
+        developments. While the latter is important, it should not be at the expense 
+        of more traditional engineering.
+    
+        Rapidly developing economies such as China and India, as well as other 
+        industrial countries in Europe and Asia, continue to encourage and advance 
+        the teaching of engineering. Both China and India, respectively, graduate 
+        six and eight times as many traditional engineers as does the United States. 
+        Other industrial countries at minimum maintain their output, while America 
+        suffers an increasingly serious decline in the number of engineering graduates 
+        and a lack of well-educated engineers.
+        """
+    )
+
+
+"""
+[8. Translation(기계 번역)]
+- 작업(task) 이름에 언어 쌍(ex. "translation_en_to_fr")을 지정하면 시스템에서 기본적으로 제공하는 default model 사용할 수 있으나,
+  가장 쉬운 방법은 Model Hub에서 사용하고자 하는 모델을 선택하는 것
+- text-generation과 마찬가지로 max_length 또는 min_length 지정이 가능
+"""
+from transformers import pipeline
+
+translator = pipeline("translation", model="Helsinki-NLP/opus-mt-fr-en")
+translator("Ce cours est produit par Hugging Face.")
