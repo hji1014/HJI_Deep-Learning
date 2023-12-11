@@ -162,3 +162,90 @@ trainer = Trainer(
 
 trainer.train()
 
+
+"""
+3) 전체 학습(Full Training)
+- Trainer 클래스를 사용하지 않고, dataloader 사용하여 동일한 결과를 얻는 방법 공부
+- 실제 데이터 형태(shapes)가 살짝 다를 수 있는데 이는 학습 dataloader에 대해 shuffle=True를 설정하고 배치(batch) 내에서의 최대 길이로 패딩(padding)하기 때문
+"""
+from datasets import load_dataset
+from transformers import AutoTokenizer, DataCollatorWithPadding
+
+raw_datasets = load_dataset("glue", "mrpc")
+checkpoint = "bert-base-uncased"
+tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+
+def tokenize_function(example):
+    return tokenizer(example["sentence1"], example["sentence2"], truncation=True)
+
+tokenized_datasets = raw_datasets.map(tokenize_function, batched=True)
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
+tokenized_datasets = tokenized_datasets.remove_columns(["sentence1", "sentence2", "idx"])           # 데이터 후처리
+tokenized_datasets = tokenized_datasets.rename_column("label", "labels")
+tokenized_datasets.set_format("torch")
+print(tokenized_datasets["train"].column_names)
+
+from torch.utils.data import DataLoader                 # dataloader 정의
+
+train_dataloader = DataLoader(
+    tokenized_datasets["train"],
+    shuffle=True,
+    batch_size=8,
+    collate_fn=data_collator,
+)
+
+eval_dataloader = DataLoader(
+    tokenized_datasets["validation"],
+    batch_size=8,
+    collate_fn=data_collator,
+)
+
+for batch in train_dataloader:                                      # 데이터 처리 오류 확인
+    break
+{k: v.shape for k, v in batch.items()}
+
+from transformers import AutoModelForSequenceClassification         # 모델 인스턴스화(instantiate)
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
+
+outputs = model(**batch)                                            # 학습 가능한 지 모델에 batch를 전달해보기
+print(outputs.loss, outputs.logits.shape)
+
+from transformers import AdamW                                      # Adam + weight decay regularization
+optimizer = AdamW(model.parameters(), lr=5e-5)
+
+from transformers import get_scheduler                              # 학습률 스케줄러
+num_epochs = 3
+num_training_steps = num_epochs * len(train_dataloader)
+lr_scheduler = get_scheduler(
+    "linear",
+    optimizer=optimizer,
+    num_warmup_steps=0,
+    num_training_steps=num_training_steps,
+)
+print(num_training_steps)
+
+# 학습 루프
+import torch
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+model.to(device)
+print(device)
+
+from tqdm.auto import tqdm
+
+progress_bar = tqdm(range(num_training_steps))
+
+model.train()
+for epoch in range(num_epochs):
+    for batch in train_dataloader:
+        batch = {k: v.to(device) for k, v in batch.items()}
+        outputs = model(**batch)
+        loss = outputs.loss
+        loss.backward()
+
+        optimizer.step()
+        lr_scheduler.step()
+        optimizer.zero_grad()
+        progress_bar.update(1)
+
