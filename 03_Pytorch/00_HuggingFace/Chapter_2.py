@@ -183,6 +183,7 @@ print(decoded_string)
 - 모든 시퀀스의 길이를 동일하게 패딩해줘야 함. -> 패딩 토큰 식별자(ID)는 tokenizer.pad_token_id에 저장되어 있음
     -> 대부분의 모델은 sequence length를 512개 또는 1024개까지 처리할 수 있음
     -> 더 긴 sequence를 처리하기 위해서는 다른 모델을 쓰던가, sequence를 잘라서 넣어야 함(sequence = sequence[:max_sequence_length])
+    -> 절단하는 것을 truncation이라고 함
 """
 
 # 에러 코드 -> (14,) 크기의 텍스트 하나만 달랑 넣었을 때 -> 에러 발생
