@@ -1,6 +1,8 @@
 """ [Chapter 2 : Transformers 라이브러리 사용하기]
 1) pipeline 내부 실행 과정
 2) models
+3) tokenizer
+4) handling multiple sequences(다중 시퀀스 처리)
 """
 
 
@@ -122,3 +124,153 @@ import torch
 model_inputs = torch.tensor(encoded_sequences)
 
 output = model(model_inputs)
+
+
+"""
+3) tokenizer(토크나이저)
+- 단어 기반 토큰화 (Word-based Tokenization)
+    - split on spaces
+    - split on punctuation
+    - 모든 단어를 감당할려면 엄청나게 많은 메모리가 소비됨
+    - 중요 단어만 추가하면 out-of-vocabulary (OOV, unknown) 문제에 직면하게 됨
+- 문자 기반 토큰화 (Character-based Tokenization)
+- 하위 단어 토큰화 (Subword Tokenization)
+    - 위의 두 가지 방법을 모두 종합한 방법
+    - ex) annoyingly -> annoying + ly
+- 세부 기법들
+    - Byte-level BPE (GPT-2에 사용됨)
+    - WordPiece (BERT에 사용됨)
+    - SentencePiece, Unigram (몇몇 다국어 모델에 사용됨)
+    
+- 토크나이저 로딩 및 저장 : '모델 로드 및 저장'과 마찬가지로 from_pretrained()와 save_pretrained() 메서드를 그대로 사용
+
+- Encoding : 토큰화 + 입력 식별자(input IDs)로의 변환 -> 2단계
+- Decoding : 다시 text로 변환하는 인코딩 반대 과정
+"""
+
+# 토크나이저 로딩(1)
+from transformers import BertTokenizer
+tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+tokenizer("Using a Transformer network is simple")
+
+# 토크나이저 로딩(2)
+from transformers import AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+tokenizer("Using a Transformer network is simple")
+
+# 토크나이저 저장
+tokenizer.save_pretrained("./bert_tok")
+
+# 토큰화 작업(인코딩)
+sequence = "Using a Transformer network is simple"
+
+from transformers import AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+tokens = tokenizer.tokenize(sequence)
+print(tokens)
+
+# 토큰을 input IDs로 변환(인코딩)
+ids = tokenizer.convert_tokens_to_ids(tokens)
+print(ids)
+
+# 디코딩
+decoded_string = tokenizer.decode([7993, 170, 13809, 23763, 2443, 1110, 3014])
+print(decoded_string)
+
+"""
+4) handling multiple sequences(다중 시퀀스 처리)
+- model은 입력의 batch 형태를 요구함 -> 1개 데이터 shape : (1, 14), 2개 데이터 shape : (2, 14)
+- 모든 시퀀스의 길이를 동일하게 패딩해줘야 함. -> 패딩 토큰 식별자(ID)는 tokenizer.pad_token_id에 저장되어 있음
+    -> 대부분의 모델은 sequence length를 512개 또는 1024개까지 처리할 수 있음
+    -> 더 긴 sequence를 처리하기 위해서는 다른 모델을 쓰던가, sequence를 잘라서 넣어야 함(sequence = sequence[:max_sequence_length])
+"""
+
+# 에러 코드 -> (14,) 크기의 텍스트 하나만 달랑 넣었을 때 -> 에러 발생
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+checkpoint = "distilbert-base-uncased-finetuned-sst-2-english"
+tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
+
+sequence = "I've been waiting for a HuggingFace course my whole life."
+
+tokens = tokenizer.tokenize(sequence)
+ids = tokenizer.convert_tokens_to_ids(tokens)
+input_ids = torch.tensor(ids)
+
+model(input_ids)        # This line will fail
+
+tokenized_inputs = tokenizer(sequence, return_tensors="pt")         # 이렇게 해야 함
+print(tokenized_inputs["input_ids"])
+
+# 제대로 입력 넣는 방법
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+checkpoint = "distilbert-base-uncased-finetuned-sst-2-english"
+tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
+
+sequence = "I've been waiting for a HuggingFace course my whole life."
+
+tokens = tokenizer.tokenize(sequence)
+ids = tokenizer.convert_tokens_to_ids(tokens)
+
+input_ids = torch.tensor([ids])         # 시퀀스 1개
+print("Input IDs:", input_ids)
+
+output = model(input_ids)
+print("Logits:", output.logits)
+
+batched_ids = [ids, ids]                # 시퀀스 2개
+input_ids = torch.tensor(batched_ids)
+
+output = model(input_ids)
+print("Logits:", output.logits)
+
+# 입력을 padding 하기(padding 전) -> 차원이 맞지 않아 tensor로 변환 안됨
+batched_ids = [
+    [200, 200, 200],
+    [200, 200],
+]
+
+# 입력을 padding 하기(padding token : 100)
+padding_id = 100
+
+batched_ids = [
+    [200, 200, 200],
+    [200, 200, padding_id],
+]
+
+# 패딩한 시퀀스를 모델에 넣어보기
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+checkpoint = "distilbert-base-uncased-finetuned-sst-2-english"
+tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
+
+sequence1_ids = [[200, 200, 200]]
+sequence2_ids = [[200, 200]]
+batched_ids = [
+    [200, 200, 200],
+    [200, 200, tokenizer.pad_token_id],
+]
+
+print(model(torch.tensor(sequence1_ids)).logits)
+print(model(torch.tensor(sequence2_ids)).logits)
+print(model(torch.tensor(batched_ids)).logits)          # sequence2와 batched_ids의 두 번째 데이터로부터 추론된 결과가 다름 -> pad 토큰의 영향(with attention layers) -> attention mask를 사용하여 패딩 토큰을 무시하게 만들어야 함
+
+batch_ids = [
+    [200, 200, 200],
+    [200, 200, tokenizer.pad_token_id],
+]
+
+attention_mask = [
+    [1, 1, 1],
+    [1, 1, 0],
+]
+outputs = model(torch.tensor(batch_ids), attention_mask=torch.tensor(attention_mask))
+print(outputs.logits)       # attention mas를 사용하면 sequence2와 같은 결과가 추론됨
+
