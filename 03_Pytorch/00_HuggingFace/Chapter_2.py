@@ -73,6 +73,8 @@ checkpoint = "distilbert-base-uncased-finetuned-sst-2-english"
 model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
 outputs = model(**inputs)                   # output shape : (2, 2)
 print(outputs.logits.shape)
+#print(outputs["last_hidden_state"])
+#print(outputs[0])
 
 # 출력 후처리하기
 print(outputs.logits)       # 위에서 도출된 이 값은 마지막 계층에서 출력된 정규화되지 않은 원시 점수인 'logits'임
