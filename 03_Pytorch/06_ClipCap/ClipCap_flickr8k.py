@@ -415,12 +415,21 @@ dataset = ClipCocoDataset(data_path, prefix_length)
 
 # =================================================================================================================== #
 
-model = ClipCaptionPrefix(40,
+model = ClipCaptionPrefix(40,                   # train only prefix
                           clip_length=40,
                           prefix_size=640,
                           num_layers=8,
-                          mapping_type='transformer'
+                          mapping_type='transformer',
+                          # mapping_type='mlp',
                           )
+
+# model = ClipCaptionModel(40,                              # train both prefix and GPT
+#                           clip_length=40,
+#                           prefix_size=640,
+#                           num_layers=8,
+#                           mapping_type='transformer',
+#                           # mapping_type='mlp',
+#                           )
 
 # =================================================================================================================== #
 
@@ -615,7 +624,7 @@ if use_beam_search:
                                           tokenizer,
                                           beam_size=7,
                                           embed=prefix_embed,
-                                          stop_token='<|endoftext|>',
+                                          stop_token='<|endoftext|>',   # ??
                                           entry_length=30
                                           )
     #generated_text_prefix = generate_beam(model, tokenizer, embed=prefix_embed)[0]
