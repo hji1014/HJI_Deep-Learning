@@ -2,6 +2,8 @@
 ref :
 https://www.kaggle.com/code/shreydan/visiongpt2-image-captioning-pytorch
 
+dataset : coco2017
+
 ※ 만약 num_workers=0으로 바꾼 후 오류 발생 시 torch 내 dataloader.py에 들어가 아래 구문 주석처리 하면 됨
 (ref : https://aistudy9314.tistory.com/87)
 
