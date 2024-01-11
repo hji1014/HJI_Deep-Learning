@@ -452,7 +452,7 @@ class VisionGPT2Model(nn.Module):
             out = out[:, -1, :] / temperature
             probs = F.softmax(out, dim=-1)
             if deterministic:
-                next_token = torch.argmax(probs, dim=-1, keepdim=True)
+                next_token = torch.argmax(probs, dim=-1, keepdim=True)      # 가장 확률 높은 토큰만 선택 = deterministic generation
             else:
                 next_token = torch.multinomial(probs, num_samples=1)
             sequence = torch.cat([sequence, next_token], dim=1)
@@ -686,3 +686,43 @@ val_dl = torch.utils.data.DataLoader(
 # 학습
 trainer = Trainer(model_config, train_config, (train_dl, val_dl))
 trainer.fit()
+
+# =================================================================================================================== #
+
+"""
+[Results]
+"""
+trainer.metrics
+
+plt.plot(trainer.metrics['train_loss'], color='red', label='train loss')
+plt.plot(trainer.metrics['val_loss'], color='orange', label='valid loss')
+plt.title('loss, lower=better')
+plt.legend()
+plt.show()
+
+plt.plot(trainer.metrics['train_perplexity'], color='blue', label='train perplexity')
+plt.plot(trainer.metrics['val_perplexity'], color='lightblue', label='valid perplexity')
+plt.title('perplexity, lower=better')
+plt.legend()
+plt.show()
+
+# =================================================================================================================== #
+
+"""
+[Predictions]
+"""
+trainer.load_best_model()
+
+for i in range(1):
+    det = True
+    test = val_df.sample(n=1).values[0]
+    test_img, test_caption = test[0], test[1]
+    plt.imshow(Image.open(test_img).convert('RGB'))
+    t = np.random.uniform(0.5, 1.5)
+    if i > 40:
+        det = True
+    gen_caption = trainer.generate_caption(test_img, temperature=t, deterministic=det)
+    # plt.title(f"actual: {test_caption}\nmodel: {gen_caption}\ntemp: {t} deterministic generation: {det}")
+    plt.title(f"actual: {test_caption}\nmodel: {gen_caption}\n")
+    plt.axis('off')
+    plt.show()
