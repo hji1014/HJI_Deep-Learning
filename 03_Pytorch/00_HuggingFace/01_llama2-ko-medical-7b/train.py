@@ -1,3 +1,7 @@
+"""
+ref : https://github.com/jwj7140/ko-medical-chat/blob/main/llama2_chat_learn.ipynb
+"""
+
 # !pip install -q -U bitsandbytes
 # !pip install -q -U git+https://github.com/huggingface/transformers.git
 # !pip install -q -U git+https://github.com/huggingface/peft.git
@@ -187,10 +191,10 @@ prompt = """아래는 전문적인 의사와 환자의 진료 기록이다.
 환자: 음...못 움직입니다. 너무 아파요
 의사:"""
 
-tokenizer.decode(model.generate(
+print(tokenizer.decode(model.generate(
     **tokenizer(
-        prompt, 
-        return_tensors='pt', 
+        prompt,
+        return_tensors='pt',
         return_token_type_ids=False
     ),
     max_new_tokens=500,
@@ -199,4 +203,4 @@ tokenizer.decode(model.generate(
     early_stopping=True,
     eos_token_id=2,
     stopping_criteria=stopping_criteria
-)[0]).replace(prompt+" ", "")
+)[0]).replace(prompt+" ", ""))
